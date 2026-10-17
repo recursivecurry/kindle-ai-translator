@@ -4,6 +4,18 @@
 
 Translate books in Kindle Web Reader while keeping the original page layout as closely as possible. Translated text can be selected and copied.
 
+## Example
+
+The same Kindle spread in English and Korean, with illustrations and the two-page layout preserved.
+
+### Original
+
+![Original English text in Kindle Web Reader](docs/images/kindle-original.png)
+
+### Translation
+
+![Korean translation with the reader controls and previous-page view enabled](docs/images/kindle-translated.png)
+
 ## Install
 
 You need Chrome 116 or later, an OpenAI API key, and a packaged extension ZIP. The repository's **Download ZIP** contains source code, not an installable extension.

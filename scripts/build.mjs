@@ -8,6 +8,7 @@ await cp("README.md", "dist/README.md");
 await cp("README.ko.md", "dist/README.ko.md");
 await cp("DESIGN.md", "dist/DESIGN.md");
 await cp("DESIGN.ko.md", "dist/DESIGN.ko.md");
+await cp("docs/images", "dist/docs/images", { recursive: true });
 await build({
   entryPoints: [
     "src/background.ts",

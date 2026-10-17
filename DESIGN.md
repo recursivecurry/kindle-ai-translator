@@ -1,66 +1,31 @@
-# 구현 결정과 검증 기록
+# Architecture
 
-2026-10-17, Asia/Seoul.
+[한국어](DESIGN.ko.md)
 
-아래 `artifacts/` 경로는 로컬 검증 자료를 가리키며, 책 본문과 캡처를 포함할 수 있어 저장소에는 포함하지 않는다.
+`kindle-ai-translator` is a Chrome Manifest V3 extension. It recognizes text locally, translates it through OpenAI, and overlays selectable text on the Kindle page. It has no separate application server.
 
-## 조사
+## Components and flow
 
-2026-10-17에 실제 Kindle 위치 1191과 해당 페이지가 로드한 공개 JavaScript를 조사했다. `.kg-view`에는 이미지 1개만 있고 본문 텍스트는 0자였으며, 문단·텍스트 span·접근성 레이어도 없었다. 공개 렌더러의 선택 로직은 `getRenderedPage().tokens.children`의 단어 위치 ID와 좌표를 사용한다. `layout`의 단어에 `content`가 있을 때만 접근성 텍스트 레이어를 추가한다. 본문 그리기는 glyph ID와 글꼴 경로를 canvas에 렌더링하는 방식이다.
+1. **Reader content script** detects visible page images and page changes, tracks Kindle Location, and manages the translation overlay and reader controls.
+2. **Background service worker** manages settings, API credentials, cancellation, caches, and translation requests.
+3. **Offscreen document** runs Tesseract OCR, measures translated text, and prepares a background that preserves illustrations.
+4. **Kindle bridge** supplies native word coordinates when available. OCR coordinates remain the fallback.
+5. **Settings page** manages languages, typography, cache size, and the API key.
 
-복사 동작은 위치 범위를 `reader/copyText`에 보내 원문을 받으며, 응답에는 `Alert`와 `LimitExceeded` 상태가 있다. 따라서 선택 가능한 좌표가 있다는 사실만으로 로컬 원문도 얻을 수 있다고 단정할 수 없다. 현재 책에서는 원문과 좌표를 함께 가져오는 안정적인 로컬 경로를 확인하지 못해 OCR을 유지했다. 복사 한도를 소모할 수 있는 API는 호출하지 않았다. 내부 실행 객체 전체를 추출한 조사는 아니며 다른 책·형식까지 불가능하다고 결론내리지는 않는다. 근거와 실측값은 `artifacts/kindle-native-text-investigation.json`에 기록했다.
+The processing flow is: ready page image → local OCR → translation → layout → display. Images stay local. OpenAI receives recognized paragraphs and relevant preceding-page context. The content script receives results without the API key.
 
-[KCR Translate](https://github.com/motiko/kcr-translate-ext)의 커밋 `fb7373d445bdea197b93c7abd9bee21388b28717`에서 `chrome/content/kindle/utils.ts`, `chrome/offscreen/offscreen.ts`와 manifest 구성을 확인했다. 참고 구현은 `.kg-full-page-img img`를 canvas에 그린 뒤 선택 영역을 OCR한다. 이 프로젝트는 선택 영역 처리나 기존 소스를 복사하지 않고 전체 본문 이미지 처리로 작성했다. 외부 저장소 라이선스는 MIT다.
+## Performance and reading continuity
 
-열려 있던 실제 Kindle 탭의 DOM에서 같은 선택자가 일치했으며, 최상위 문서에 blob 이미지 하나가 있었다. 원본 크기는 2352×1372, 표시 크기는 1176×686이었다. 이미지의 `object-fit: cover`, `object-position: center top`도 확인했다. 연결된 브라우저 도구가 blob 다운로드를 지원하지 않아 그 이미지 자체를 자동 시험 자료로 추출하지는 못했다.
+- **Page readiness:** Image decoding and stable Location, image, and layout observations trigger processing. A short timed fallback handles cases where readiness cannot be established.
+- **Reusable OCR workers:** Two workers recognize the left and right pages concurrently when a spread is detected, preserving reading order.
+- **Parallel translation:** Longer text is split into two requests at paragraph boundaries, preferably after complete sentences. Paragraphs are neither merged nor subdivided. Translation uses `gpt-6-luna` with low reasoning effort.
+- **Separate caches:** OCR results, translated text, and rendered pages are cached independently. Compatible text results can be reused when layout changes.
+- **Location-based continuity:** Both translation context and previous-page view use recorded book order rather than visit order. Cached content appears promptly during navigation while the current page is processed. Active pages are protected from cache eviction.
 
-실제 설치 후 검사에서 보이는 본문 이미지의 상위 요소에 `aria-hidden="true"`가 지정되어 있음을 확인했다. 이 속성을 숨겨진 페이지로 판단하던 조건 때문에 본문 탐색이 실패했다. 접근성 트리에서 숨기는 속성과 시각적 표시 상태를 구분하도록 조건을 제거했다. 통합 시험 자료에도 같은 상위 요소를 추가했으며, CSS로 숨긴 페이지·iframe에 요청을 보내지 않는 검사는 유지했다.
+## Layout and reliability
 
-[Chrome offscreen API](https://developer.chrome.com/docs/extensions/reference/api/offscreen), [Tesseract API](https://github.com/naptha/tesseract.js/blob/master/docs/api.md), [OpenAI 구조화된 응답](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses), [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini)의 공식 문서를 확인했다. 비추론 모델의 단순 번역 요청과 구조화된 응답을 사용하기 위해 GPT-4.1 mini를 초기 모델로 선택했다. 실제 번역 품질·가격·지연 비교를 완료한 선택은 아니다.
+Translations use selectable HTML text over a reconstructed background. Native Kindle coordinates refine OCR positions where they match. Layout preserves page boundaries, paragraph positions, and illustrations as closely as possible; font size is estimated and adjusted to fit.
 
-## 실행 구조
+If recognition, background safety, or available space is insufficient, the original paragraph remains visible. Translation responses are checked for paragraph IDs, order, and completeness, but these checks cannot establish semantic accuracy.
 
-두 쪽이 합쳐지는 문제를 조사하면서 실제 화면의 좌우 두 쪽이 2352×1260 이미지 하나에 들어 있음을 확인했다. 기존 자동 시험은 별도 이미지 두 개만 검사하여 이 경우를 놓쳤다. 중앙의 연속된 세로 여백과 양쪽 본문을 검사해 좌우를 별도로 OCR하도록 변경했다. 단순한 가로세로 비율만으로 강제 분할하지 않는다.
-
-후속 요청에 따라 모델을 `gpt-6-luna`로 변경했다. [공식 모델 문서](https://developers.openai.com/api/docs/models/gpt-6-luna)의 Responses·구조화된 응답 지원을 확인했다. 원문/번역 전환은 Alt+Shift+T로도 실행하며 같은 탭의 연결된 프레임에 전달한다. 입력란과 편집 영역에서는 단축키를 무시한다.
-
-콘텐츠 스크립트는 Location 이력에서 확인한 바로 앞 화면과 같은 화면의 앞 이미지에서 원문·번역문 쌍을 선택한다. 방문 순서나 단순히 더 작은 Location으로 추정하지 않는다. 마지막 문단부터 최대 8,000자를 참고 문맥으로 보내며, 서비스 워커에서도 형식과 크기를 제한한다. 실패한 화면이나 10분이 지난 항목은 문맥에 넣지 않는다. 캐시 재방문은 기존 번역을 유지한다.
-
-한 이미지의 본문이 400자 이상이고 문단이 둘 이상이면 원문 길이가 비슷해지는 문단 경계에서 두 요청으로 나눈다. 문장이 끝나는 문단 경계를 우선하며, 각 요청은 원래 문단 ID와 텍스트를 유지한다. 다른 요청의 원문은 참고 자료로 추가하지 않는다. 응답은 요청 순서로 결합하여 원래 문단 목록과 검증하며, 한 요청이 실패하면 나머지도 취소한다. 짧은 본문은 단일 요청을 사용한다. 문단 병합·번역문 재분할·하이픈 보정은 하지 않는다. 텍스트 캐시 키는 책·언어·모델·프롬프트 버전·문맥·정규화한 원문과 문단 구분으로 구성하며 이미지 좌표와 문단 ID는 제외한다. 병렬 번역은 별도 버전의 캐시 키를 사용한다.
-
-- 콘텐츠 스크립트: 현재 보이는 본문 이미지만 탐색한다. DOM 변경 및 250ms 주기 검사로 변경을 감지하고, 이미지 디코딩과 연속 두 프레임의 Location·이미지·배치를 확인한 뒤 자연 해상도의 canvas로 복사한다. Location이나 이동 전후 이미지 교체를 확인할 수 없을 때만 300ms 대기를 사용한다. 페이지·요소·주소·해상도·위치·스타일이 바뀌면 이전 작업을 무효화한다. Shadow DOM 안의 배경 이미지와 HTML 텍스트를 원본의 object-fit·object-position에 맞춰 함께 확대·축소하고 표시 영역을 조상 요소와 뷰포트에 맞춰 자른다. 문단에서는 텍스트 선택을 허용하고 여백은 클릭을 통과시킨다.
-- 서비스 워커: 설정과 키를 관리한다. 연결된 콘텐츠 스크립트마다 AbortController를 유지하고 이미지 작업을 직렬화한다. 현재 OCR 텍스트와 이전 페이지의 원문·번역문을 OpenAI로 보낸다. 콘텐츠 스크립트에는 공개 설정과 처리 결과만 반환한다.
-- Offscreen 문서: 포함된 Web Worker와 WASM으로 OCR한다. 원문 문단·단어·줄·쪽 좌표를 추출하고, canvas로 배경을 복원하고 번역문 크기를 측정한다. 반환하는 배경에는 번역 글자를 그리지 않으며, 별도의 텍스트 배치를 콘텐츠 스크립트가 HTML로 표시한다.
-- 설정 화면: API 키 저장·삭제와 브라우저 전체 자동 번역 설정을 제공한다. 별도 UI 프레임워크나 서버는 사용하지 않는다.
-
-OCR 워커 2개를 같은 언어에서 재사용한다. 한 이미지에서 좌우 페이지를 감지하면 두 워커로 동시에 인식하고, 완료 순서와 관계없이 왼쪽부터 문단을 합친다. 단일 페이지는 워커 하나만 사용한다. 취소·실패·언어 변경 시 두 워커를 폐기하며, 초기화 중인 워커도 준비되는 즉시 종료한다. 언어 모델은 패키지에 포함한다. 번역 이미지 캐시는 콘텐츠 스크립트에, OCR·번역 단계 캐시는 서비스 워커의 연결별 메모리에 둔다.
-
-본문 옆 메뉴의 이전 페이지 모드는 Location별 이미지 해시 목록과 앞뒤 이동 관계를 기억한다. 이동 방향과 Location 변화가 일치하고 화면 배치가 같으면, 안정화 대기 전에 이전 페이지의 원본·번역 캐시를 표시한다. 안정화 후에는 이미지 해시로 다시 확인하고 현재 화면의 OCR·번역을 진행한다. 같은 Location의 이미지나 배치가 달라지면 이동 관계를 초기화한다. 현재 작업이 끝나거나 실패해도 유효한 이전 화면은 유지한다. 책이나 번역 설정이 바뀌면 이력을 비운다. 모드만 바뀌면 캐시를 유지하고 표시를 다시 구성한다.
-
-캐시는 기본 5개, 설정에서 1~30개의 이미지로 제한한다. 접근한 항목을 Map의 끝으로 옮겨 최근 사용 순서를 유지하고, 개수 또는 배경 이미지 24MB 한도를 넘으면 가장 오래 사용하지 않은 항목부터 지운다. 유효 기간은 생성 후 10분이다. 이전 페이지 모드에서는 현재 원본을 저장하기 전에 현재·이전 화면의 키를 보호 대상으로 지정하며, 보호된 항목은 개수·용량·시간 제한으로 지우지 않는다. 다음 화면을 처리할 때 보호 대상을 갱신한다. 서로 다른 이미지 수의 화면 사이에서는 직전 화면을 억지로 맞추지 않고 현재 화면을 표시한다.
-
-각 처리 단계는 제한 시간이 있다. 이미지 로딩 10초, OCR 60초, 합성 응답 15초, 전체 작업 120초다. 콘텐츠 스크립트도 전체 응답을 125초까지만 기다린다. 페이지 전환, 설정 변경, 연결 종료 시 AbortController와 작업 세대 번호로 취소·무효화한다. 이미 서버에 도착한 API 요청의 취소가 비용 취소를 보장하지는 않는다.
-
-## 합성 정책
-
-위치 1157의 미번역 5개 문단을 진단했다. p1·p2·p9는 짧은 원문 글자의 폭만 사용해 번역이 두 줄로 넘어가면서 높이 검사를 통과하지 못했다. p4·p8은 OCR 신뢰도 94·96에도 배경 검사에서 탈락했다. 캡처로 p4를 재현했으며, 단어 상자 밖으로 이어지는 실제 글자 획이 다른 그림으로 처리되는 것을 확인했다. 글자 높이에 비례한 여유와 작은 연결 요소 검사를 추가했다. 큰 연결 요소나 단어와 연결되지 않은 잉크는 허용하지 않는다. 한 줄 문단은 같은 쪽 본문의 오른쪽 경계까지 배경이 안전하고 다른 문단과 겹치지 않을 때만 폭을 확장한다. 이때 시작 좌표와 글자 크기를 유지한다.
-
-OCR 줄 상자를 보관하여 글자 높이와 줄 간격, 첫 줄 들여쓰기, 여러 줄의 가운데 정렬을 추정한다. 한국어를 원본 문단 영역 안에서 다시 줄바꿈하며 필요한 경우에만 글자와 간격을 줄인다. 원본 서체와 굵기를 식별하거나 복제하지는 않는다.
-
-OCR 문단 안에서도 큰 줄 간격과 글자 크기 변화를 기준으로 제목과 본문을 분리한다. 문단 ID별 번역을 받아 수·순서·중복·빈 응답을 검증한다. 책 내용은 JSON 데이터로 전달하며 시스템 지시를 따르지 않도록 별도 지시한다. 번역 API에는 도구 실행 권한이 없다.
-
-문단 주변의 배경색과 테두리를 검사하고, OCR 단어 상자 밖에 배경과 다른 픽셀이 있으면 해당 문단은 원문으로 남긴다. 안전하다고 판단한 문단 영역만 배경색으로 지운 뒤 같은 좌표에 HTML 텍스트를 올린다. 번역 내용은 textContent로 삽입한다. 사진을 재생성하지 않는다. 글자 크기를 원문 글리프 높이에 맞춰 추정하고 약 85% 아래로 축소하지 않는다. 글자 크기 하한과 폭·높이, 쪽 경계를 모두 검사한다. 실패한 문단은 사용자에게 개수를 알려 준다.
-
-이 정책은 그림을 보호하는 보수적인 휴리스틱이다. 실제 책에서 일반 본문이 반복적으로 남는다면 OCR·문단 분리·배경 검사를 개선해야 한다. 부분 처리 안내는 일반 본문 전체 번역의 완료 기준을 대신하지 않는다.
-
-## 검증의 경계
-
-HTML 표시 버전의 실제 Kindle 검증에서 12개 문단 번역 성공, 좌우 두 쪽 유지, 드래그 선택과 Option+Shift+T 전환을 확인했다. 원문 비교 중 폭이 같은 줄들이 가운데 정렬로 추정되는 문제를 발견했다. 줄 가운데가 일치하더라도 줄 폭에 유의미한 차이가 있을 때만 가운데 정렬로 판단하도록 고치고 회귀 검사를 추가했다. 선택 화면은 `artifacts/kindle-live-html-selected.png`에 남겼다. 아래 HTTP 429 기록은 이 검증 이전의 초기 결과다.
-
-최종 정렬 수정본을 다시 설치하여 위치 1141에서 12개 문단 전체 표시를 확인했다. API 응답 검증이 한 번 실패하여 원문을 유지했고, 재시도는 성공했다. 다음 위치 1157에서도 좌우 배치가 유지됐지만 12개 중 5개 문단은 배경·인식·공간 검사로 원문이 남았다. 모든 일반 본문이 번역된다고 보장할 수 없으며, 원문 글자 크기 일치 역시 OCR 추정 범위다. 결과는 `artifacts/kindle-live-html-report.json`에 기록했다.
-
-자동 시험은 실제 확장, 실제 OCR, 배경 합성과 HTML 텍스트 표시를 실행하며 API 응답만 모의 처리한다. 생성한 영어 문단과 도형의 픽셀을 사용하므로 번역 품질 검증은 아니다. 최신 성공 결과의 검사 목록은 `artifacts/integration-report.json`에 기록한다. 두 쪽을 담은 단일 이미지의 좌우 문단 분리·좌표·글자 크기와 마우스 드래그 선택도 검사한다.
-
-실제 설치 후 사용자가 설정 화면에 저장한 키로 본문 이미지 취득, 6개 문단 OCR, OpenAI API 요청을 확인했다. 최초 요청과 시간을 둔 재시도 모두 HTTP 429로 실패했다. 응답의 세부 오류 코드는 현재 UI에 표시하지 않으므로 속도 제한과 크레딧·사용 한도 문제 중 어느 쪽인지 확정하지 않았다. 오류 표시와 원문 유지, 번역 끄기는 실제 환경에서 확인했다. 반복 요청을 막기 위해 자동 번역을 끈 상태로 두었다. 키 값은 읽거나 변경하지 않았다.
-
-실제 계정의 책 페이지 이동 후 합성, 실제 OpenAI 번역 품질과 지연, 다단 본문의 순서, 사진·표·수식, 브라우저 확대·축소, Windows/Linux 글꼴은 아직 검증하지 않았다. 개인 API 키를 기존 `.env`나 다른 확장 저장소에서 찾거나 가져오지 않았다. 기록은 `artifacts/kindle-live-report.json`과 `artifacts/kindle-live-result.png`에 남겼다.
+Page changes and settings changes cancel obsolete work. Timeouts and result validation prevent stale translations from replacing the active view. API credentials stay in local extension storage; caches are temporary and held in memory.

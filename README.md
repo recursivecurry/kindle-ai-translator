@@ -1,80 +1,62 @@
 # kindle-ai-translator
 
-킨들 웹 리더의 본문 이미지를 기기에서 OCR하고, 인식한 본문을 선택한 언어로 번역해 같은 위치에 표시하는 Chrome 확장입니다. 번역에는 OpenAI를 사용합니다.
+[한국어](README.ko.md)
 
-## 설치
+Translate books in Kindle Web Reader while keeping the original page layout as closely as possible. Translated text can be selected and copied.
 
-1. 이 저장소를 내려받고 `npm ci`와 `npm run package`를 실행합니다. 생성된 `artifacts/kindle-ai-translator-0.1.0.zip`을 새 폴더에 압축 해제하거나 이 프로젝트의 `dist` 폴더를 사용합니다.
-2. Chrome의 `chrome://extensions`에서 개발자 모드를 켜고 **압축해제된 확장 프로그램을 로드합니다**를 선택합니다. `manifest.json`이 있는 폴더를 지정합니다.
-3. 확장 아이콘을 눌러 설정을 엽니다. 자신의 OpenAI API 키를 설정 화면에 입력하고 자동 번역을 켠 뒤 저장합니다. 키를 채팅이나 소스 코드에 넣지 마세요.
-4. 이미 열려 있던 킨들 탭을 새로고침하고 책을 엽니다. 페이지가 안정되면 자동으로 번역합니다.
+## Install
 
-본문 오른쪽 아래에서 원문/번역 보기, 재시도, 번역 끄기/켜기를 선택할 수 있습니다. 자동 번역 설정은 이 브라우저의 모든 킨들 탭에 적용됩니다. 번역을 끄면 진행 중 작업을 취소하고 원문으로 돌아갑니다. 같은 버튼이 ‘번역 켜기’로 바뀌며, 누르면 설정 화면에 가지 않고 현재 페이지의 번역을 다시 시작합니다.
+You need Chrome 116 or later, an OpenAI API key, and a packaged extension ZIP. The repository's **Download ZIP** contains source code, not an installable extension.
 
-본문 오른쪽 아래에서 원문 보기·재시도·번역 끄기/켜기와 함께 있는 **이전 페이지 보기**를 누르면 켜짐·꺼짐을 전환합니다. 켜면 책에서 현재 화면 바로 앞에 있는 화면의 번역을 보면서 현재 화면을 번역합니다. 현재 번역이 완료되어도 표시 중인 이전 번역은 바뀌지 않으며, 다음 화면으로 이동했을 때 준비된 번역을 보여 줍니다. 페이지를 넘길 때는 기존 표시를 유지하다가 다음 표시가 준비되면 교체합니다. 표시할 이전 페이지의 번역이 없으면 캐시된 원본 이미지를 먼저 보여 주고, 해당 페이지를 번역해 교체합니다. 빠르게 넘겨 이전 번역이 준비되지 않았거나 캐시가 만료되면 현재 화면을 표시합니다. 모드를 끄면 현재 화면의 번역으로 돌아갑니다. 캐시가 있으면 API를 다시 호출하지 않습니다.
+1. Extract the extension ZIP to a folder you will keep on your computer.
+2. Open `chrome://extensions`, enable **Developer mode**, and choose **Load unpacked**. Select the folder containing `manifest.json`.
+3. Click the extension icon. Enter your API key, choose the source and target languages, enable automatic translation, and save.
+4. Reload any open Kindle tabs and open a book.
 
-이 모드에서 Kindle의 위치·진행률은 현재 원문 기준이므로 표시 중인 번역과 다릅니다. ‘원문 보기’나 단축키로 전환하면 표시 중인 이전 페이지의 원문을 보여 줍니다. 다시 전환하면 같은 페이지의 번역으로 돌아갑니다. 하단 Location과 앞뒤 페이지 버튼·방향키 이동을 함께 기록해 책의 이전 화면을 찾습니다. 뒤로 이동해도 마지막으로 방문한 다음 화면을 표시하지 않습니다. Location을 읽지 못하거나, 목차·슬라이더 이동 등으로 이전 화면의 관계를 확인하지 못하거나, 해당 캐시가 없으면 현재 화면을 표시합니다. 화면 크기나 같은 Location의 페이지 배치가 바뀌면 이동 관계를 초기화합니다. 첫·마지막 페이지 전용 처리는 아직 구현하지 않았으며, 확장이 자동으로 페이지를 넘기지는 않습니다. 토글은 모든 Kindle 탭에 적용하고, 캐시는 탭의 각 프레임에서 따로 유지합니다.
+Supported readers: `read.amazon.com`, `read.amazon.co.uk`, `read.amazon.co.jp`, and `read.amazon.de`.
 
-`Alt+Shift+T`로 현재 탭의 원문과 번역을 전환합니다. Mac에서는 `Option+Shift+T`입니다. 입력란이나 편집 중인 영역에서는 동작하지 않습니다.
+## Read and translate
 
-번역문은 선택 가능한 HTML 텍스트입니다. 드래그해서 선택한 뒤 브라우저의 복사 기능을 사용할 수 있습니다. 그림과 원문을 지운 배경은 이미지로 유지하고 그 위에 번역문을 표시합니다. 텍스트 위에서는 선택을 우선하므로 페이지 이동은 Kindle의 화살표나 여백에서 하세요.
+Use the menu at the bottom right of the reader to:
 
-설정과 뷰어 오른쪽 아래 메뉴에서 원본 언어와 번역할 언어를 선택할 수 있습니다. 기본값은 영어 → 한국어입니다. 한국어, 영어, 일본어, 중국어 간체·번체, 스페인어, 프랑스어, 독일어, 포르투갈어, 베트남어를 지원합니다. 뷰어에서는 선택 즉시 저장되어 모든 Kindle 탭에 적용됩니다. 언어를 바꾸면 이전 번역 캐시와 문맥을 비우고 다시 번역합니다. 원본 언어에 맞는 OCR 학습 데이터를 사용합니다.
+- Switch between the original and translation.
+- Retry a translation or turn translation off and back on.
+- Change the source and target languages.
+- Toggle **Previous page view**.
 
-설정에서 번역 글꼴을 나눔명조(serif) 또는 나눔고딕(sans-serif)으로 선택하고, 글자 크기를 원문 기준 70~130%로 조절할 수 있습니다. 기본값은 나눔고딕·100%입니다. 선택한 글꼴에 없는 문자는 시스템 대체 글꼴을 사용합니다. 두 글꼴은 확장에 포함되어 별도 설치나 실행 중 다운로드가 필요 없습니다. 글자 측정과 화면 표시에는 같은 글꼴을 사용합니다. 문단에 맞추기 위해 설정 크기의 85%까지 줄일 수 있으며, 그래도 공간이 부족하면 원문을 유지합니다. 설정 저장은 캐시를 비우고 현재 화면을 다시 번역하므로 API 요청이 발생합니다.
+Press **Alt+Shift+T** (**Option+Shift+T** on Mac) to switch between the original and translation. Select translated text by dragging; use Kindle's arrows or the page margins to turn pages.
 
-글꼴 출처는 Google Fonts의 [Nanum Myeongjo](https://github.com/google/fonts/tree/main/ofl/nanummyeongjo)와 [Nanum Gothic](https://github.com/google/fonts/tree/main/ofl/nanumgothic)입니다. 각 OFL 라이선스는 `fonts` 폴더에 함께 배포합니다.
+### Previous page view
 
-## 데이터와 비용
+This mode shows the preceding page in book order while translating the current Kindle page in the background. For example, when Kindle moves to page 3, you read page 2. Moving back to page 2 shows page 1, if it is cached.
 
-OCR은 포함된 Tesseract.js 7과 선택한 원본 언어의 학습 데이터로 로컬에서 실행합니다. 지원하는 10개 언어의 학습 데이터를 확장에 포함합니다. 실행 중 OCR 코드나 언어 데이터를 CDN에서 내려받지 않습니다. OpenAI에는 현재 문단 ID, 종류와 OCR 텍스트, 직전에 번역한 페이지의 원문·번역문을 전송합니다. 책 이미지, 도서 URL, 제목 등의 별도 메타데이터는 보내지 않습니다. 본문 자체에 포함된 제목·개인정보는 OCR 텍스트에 포함될 수 있습니다.
+The existing view stays visible during page changes until the replacement is ready. A cached original may appear before its translation. If the preceding page cannot be identified or is no longer cached, the current page is shown instead.
 
-번역은 [gpt-6-luna](https://developers.openai.com/api/docs/models/gpt-6-luna)의 Responses API와 구조화된 응답을 사용합니다. `store:false`를 지정합니다. 이는 OpenAI의 모든 로그나 보관 정책이 사라진다는 뜻은 아닙니다. [OpenAI 데이터 정책](https://developers.openai.com/api/docs/guides/your-data)과 [API 가격](https://developers.openai.com/api/docs/pricing)을 확인하세요. API 사용료는 ChatGPT 구독과 별도이며 새 번역 요청마다 입력·출력 토큰 비용이 발생합니다. 이전 페이지 문맥도 입력 토큰에 포함됩니다. 실제 비용은 측정하지 않았습니다. Kindle 샘플의 단계별 시간과 앞뒤 이동 검증 결과는 `artifacts/performance-comparison.json`에 기록했습니다. 번역 API 응답 시간은 요청마다 달라집니다.
+Kindle's Location and progress indicator still refer to its current page. The original/translation toggle applies to the page you are viewing. This mode does not turn pages automatically or pretranslate unread pages.
 
-이전 페이지 문맥은 Location과 실제 페이지 이동 관계로 확인한 바로 앞 화면의 원문·번역문 쌍입니다. 방문 순서로 선택하지 않으며, 바로 앞 화면을 알 수 없으면 이전 화면 문맥을 넣지 않습니다. 같은 화면이 여러 이미지로 나뉘면 먼저 처리한 이미지도 참고합니다. 끝부분부터 최대 8,000자까지 사용하며 10분이 지난 문맥은 제외합니다. 캐시된 번역 자체를 새 문맥으로 재번역하지는 않습니다.
+## Settings
 
-한 이미지의 본문이 400자 이상이고 문단이 둘 이상이면 문단 경계에서 두 요청으로 나눠 병렬 번역합니다. 두 요청은 Location 기준 앞 문맥을 참고하며, 가능하면 문장이 끝난 문단 뒤에서 나눕니다. OCR 문단과 줄바꿈은 그대로 전달하며 문단 병합이나 번역문 재분할은 하지 않습니다. 짧은 본문은 한 번의 요청으로 번역합니다. 좌우 OCR은 워커 2개로 병렬 처리합니다.
+Open settings from the extension icon. Settings apply across Kindle tabs.
 
-API 키는 `chrome.storage.local`에 보관하며 동기화하지 않습니다. 저장소 접근은 확장 내부의 신뢰된 컨텍스트로 제한하고, 콘텐츠 스크립트에 키를 전달하지 않습니다. 로컬 저장소는 암호화된 비밀 저장소가 아니므로 기기 사용자와 확장 개발자 도구에서는 접근할 수 있습니다. 키 삭제 버튼은 자동 번역도 끕니다. 키나 책 본문을 로그에 출력하지 않습니다.
+| Setting                     | Choices                                                                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source and target languages | English, Korean, Japanese, Simplified Chinese, Traditional Chinese, Spanish, French, German, Portuguese, Vietnamese. Default: English → Korean. |
+| Font                        | Nanum Gothic or Nanum Myeongjo; other characters use system fallback fonts.                                                                     |
+| Text size                   | 70–130% of the estimated original size.                                                                                                         |
+| Cache size                  | 1–30 page images; default 5. A two-page spread stored as one image counts as one entry.                                                         |
 
-번역 배경과 텍스트 배치 캐시는 각 프레임의 메모리에 기본 5개까지 유지하며, 확장 설정에서 1~30개로 조절할 수 있습니다. 두 쪽이 한 이미지인 화면은 1개로 셉니다. 배경 이미지 약 24MB 또는 10분 제한도 적용하므로 설정 개수보다 적게 남을 수 있습니다. 개수·용량 한도를 넘으면 오래 사용하지 않은 항목부터 지웁니다. 이전 페이지 보기에서는 현재·이전 화면에 필요한 이미지를 개수·용량·시간 제한보다 우선 보관합니다. 책 주소, 원본 이미지의 SHA-256과 설정 버전을 키로 사용합니다. 책 변경, 설정 저장, 다시 시도, 탭 종료 시 캐시를 버립니다. 팝업의 이전 페이지 토글은 캐시를 유지합니다. 번역문을 디스크에 따로 저장하지 않습니다.
+The cache is temporary. Memory and expiry limits may reduce the number of retained pages; pages needed for the active previous-page view receive priority.
 
-OCR 결과와 번역 텍스트는 화면 배치와 별도로 캐싱합니다. 같은 책·이미지·원본 언어의 OCR을 재사용하므로 번역 재시도와 타겟 언어 변경에는 OCR을 다시 실행하지 않습니다. 번역 캐시는 이미지 대신 인식한 텍스트·문단 구분·앞 문맥·언어·모델을 기준으로 찾습니다. 배경이나 좌표가 바뀌어도 이 조건이 같으면 번역문을 재사용합니다. 글꼴·크기만 바꾸면 기존 번역문을 다시 배치합니다. 재시도는 번역 API를 다시 호출합니다. 이 캐시는 연결별 메모리에 설정 개수만큼 보관하며, 이전 페이지 보기에서는 최소 2개를 유지합니다. 10분이 지난 항목은 재사용하지 않으며 확장 재시작 시 사라집니다.
+## Privacy and cost
 
-페이지 준비는 이미지 디코딩 완료와 연속 두 화면 프레임의 Location·이미지·배치를 확인합니다. 방향키나 페이지 버튼으로 이동했을 때는 출발 화면과 Location·이미지가 모두 달라졌는지도 확인합니다. 확인할 수 없으면 기존 300ms 대기를 사용합니다. Kindle 내부의 공식 렌더링 완료 신호는 아니므로 이후 변경이 감지되면 진행 중인 작업을 취소합니다. OCR 워커 2개로 한 이미지의 좌우 페이지를 동시에 인식합니다. 같은 언어에서는 재사용하고, 취소·오류·언어 변경 시 둘 다 교체합니다. 동일 Kindle 이미지의 순차·병렬 비교 결과는 `artifacts/ocr-parallel-benchmark.json`에 기록했습니다.
+Text recognition runs on your device. Recognized text and relevant preceding-page text and translations are sent to OpenAI. Book images are not sent to OpenAI.
 
-## 지원 범위와 제한
+Your API key stays in this browser's local extension storage and is not synced. It is accessible to someone with access to your device. API usage is billed separately from a ChatGPT subscription; new translations and retries may incur charges.
 
-- 대상 주소는 `read.amazon.com`, `read.amazon.co.uk`, `read.amazon.co.jp`, `read.amazon.de`입니다. 현재 DOM의 `.kg-full-page-img img`를 본문으로 취급합니다. 도서 목록의 일반 이미지는 처리하지 않습니다.
-- 원본 해상도를 유지하며, 페이지 이미지별로 처리합니다. 가로로 긴 이미지의 중앙에 세로 여백이 있고 양쪽에 본문이 있으면 좌우를 별도로 OCR합니다. 왼쪽 쪽 다음 오른쪽 쪽 순서로 번역하며 좌표를 원래 위치로 되돌립니다. 서로 다른 이미지로 된 두 쪽도 각각 표시합니다. 중앙을 가로지르는 삽화나 여백이 없는 복잡한 배치에서는 쪽 경계를 정확히 찾지 못할 수 있습니다.
-- 균일한 배경의 가로쓰기 본문을 대상으로 합니다. OCR 단어 영역 바깥에 그림이나 다른 잉크가 있는 문단은 덮지 않습니다. 인식 신뢰도와 배경 검사를 통과한 영역만 교체합니다.
-- OCR 단어 상자 밖으로 이어지는 글자 획은 크기와 연결 상태를 확인해 복원합니다. 글자와 떨어진 그림이나 큰 연결 영역은 계속 보호합니다. 짧은 한 줄 문장은 같은 쪽에서 그림·다른 문단이 없는 가로 여백까지 사용하여 불필요한 축소나 번역 제외를 줄입니다. 문단 시작 위치는 옮기지 않습니다.
-- 한국어가 들어갈 크기까지 줄바꿈하고 글자를 줄이되, 최소 글자 크기 아래로 줄이거나 내용을 잘라내지 않습니다. 공간이 부족하면 해당 문단을 원문으로 유지하고 문단 수를 알려 줍니다.
-- 원본 문단 위치·폭·높이와 그림을 유지하고 OCR 줄 좌표로 첫 줄 들여쓰기, 줄 간격, 여러 줄의 가운데 정렬을 추정합니다. 한국어 글꼴의 실제 글자 높이를 측정해 원문 높이에 맞춥니다. 번역이 길면 추정 크기의 약 85%까지만 줄이며, 그래도 맞지 않으면 원문을 남깁니다. 원본 서체·굵기와 정확한 줄바꿈까지 재현하지는 못합니다.
-- 일반 Kindle 리더에서 단어 선택 좌표를 얻으면 OCR 단어와 위치를 대조해 문단 폭과 줄의 가로 시작·끝 위치를 보정합니다. 선택 영역의 높이는 실제 글자보다 클 수 있어 글자 높이와 세로 위치는 OCR 값을 유지합니다. 좌표를 얻지 못하거나 일치하지 않는 단어는 기존 OCR 좌표를 사용합니다. Kindle 내부 렌더러가 바뀌거나 샘플 리더처럼 구조가 다른 화면에서는 보정이 적용되지 않을 수 있습니다. 원문 텍스트를 가져오는 복사 API는 호출하지 않습니다.
-- 사진 위 글, 표, 수식, 세로쓰기, 복잡한 배경은 지원을 보장하지 않습니다. 제목·본문·캡션 구분은 줄 높이를 이용한 추정입니다. OCR 자체가 잘못 읽거나 놓친 글과 번역의 의미 오류를 완전히 검출하지는 못합니다.
-- 같은 출처의 iframe은 처리합니다. 부모 프레임의 표시 상태를 확인할 수 없는 교차 출처 iframe은 요청을 보내지 않습니다.
-- 숨겨진 탭·페이지를 처리하지 않습니다. 이미지 로딩, OCR, API 요청에는 제한 시간이 있습니다. 실패하면 원문을 유지하고 이유를 표시합니다. 재시도는 사용자가 선택합니다.
-- 이미지 최대 크기는 1,600만 픽셀입니다. Chrome 116 이상을 대상으로 하며 macOS Chromium 156에서 자동 테스트했습니다. 다른 OS의 한국어 글꼴과 확대·축소는 별도 실기 검증이 필요합니다.
+## Limitations and troubleshooting
 
-초기 실제 킨들 검증에서는 API 요청이 HTTP 429로 실패했습니다. 이후 HTML 표시 버전에서 실제 번역을 확인했고, 위치 1157에서 원문으로 남던 5개 문단의 배경·공간 판정도 수정했습니다. 최종 실기 검증에서는 12개 문단 모두 번역되었으며 제외 진단은 없었습니다. 좌우 두 쪽 배치, 문단 시작 위치, 마우스 드래그 선택, 단축키 양방향 전환을 확인했습니다. 본문 표시 크기는 대부분 22px, 한 문단은 20.5px였습니다. 결과는 `artifacts/kindle-live-complete-report.json`에 기록했습니다. 키 값은 읽거나 변경하지 않았습니다. 원본 서체·굵기와 정확한 줄바꿈까지 일치하지는 않으며, 다른 페이지의 모든 문단이나 번역 품질을 보장하지 않습니다.
-
-## 개발과 검증
-
-문서에서 참조하는 `artifacts/`의 측정 기록과 캡처는 로컬 검증 자료이며 저장소에 포함하지 않습니다. 자동 검증을 실행하면 해당 결과 파일을 생성합니다.
-
-```sh
-npm ci
-npx playwright install chromium
-npm run check
-npm test
-npm run build
-npm run test:integration
-npm run package
-```
-
-`tests/probe.mjs`는 확장 offscreen 문서의 이미지 디코딩·실제 OCR·샘플 합성을 직접 확인하는 초기 실험입니다. `tests/integration.mjs`는 별도 임시 브라우저 프로필에서 설치용 확장을 로드하고, 합성한 영어 페이지를 실제 OCR로 처리합니다. OpenAI 네트워크 응답만 모의 처리하므로 API 키나 과금이 필요하지 않습니다. 사용자의 일반 Chrome 프로필은 수정하지 않습니다.
-
-검증 결과는 `artifacts/integration-report.json`, 일반 화면은 `artifacts/integration-translated.png`, 두 쪽 화면의 텍스트 선택은 `artifacts/integration-spread-selected.png`에 저장됩니다. API 응답의 문단 수·ID·순서·빈 내용과 완료 상태를 검사합니다. 동일 ID 안에서 발생하는 의미 누락이나 오역은 자동으로 판정하지 않습니다.
-
-구현 구조와 조사 근거는 [DESIGN.md](DESIGN.md)를 참고하세요.
+- Recognition and translation can contain errors. Use the original view to check unclear passages.
+- Layout and font size are approximations. Paragraphs that cannot fit or safely cover the original remain untranslated.
+- Tables, equations, vertical writing, and text over pictures may not work well.
+- If translation fails, check the API key and account balance or limits, then use **Retry**.
+- After installing or reloading the extension, reload the Kindle tab too.

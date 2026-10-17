@@ -5,7 +5,9 @@ await rm("dist", { recursive: true, force: true });
 await mkdir("dist/vendor", { recursive: true });
 await cp("public", "dist", { recursive: true });
 await cp("README.md", "dist/README.md");
+await cp("README.ko.md", "dist/README.ko.md");
 await cp("DESIGN.md", "dist/DESIGN.md");
+await cp("DESIGN.ko.md", "dist/DESIGN.ko.md");
 await build({
   entryPoints: [
     "src/background.ts",

@@ -254,15 +254,28 @@ try {
   await observer.addScriptTag({
     content: await readFile("dist/content.js", "utf8"),
   });
-  await observer.evaluate(() => window.connectObserver());
-  await observer.waitForFunction(() => window.snapshots.length === 1);
+  await observer.evaluate(() => {
+    window.connectObserver();
+    document.querySelector("img").style.width = "401px";
+  });
+  await observer.waitForFunction(() => window.snapshots.length >= 2);
   const first = await observer.evaluate(() => window.snapshots[0]);
   assert.equal(first.regions.length, 1);
   assert.equal(first.regions[0].width, 400);
+  assert.equal(
+    await observer.evaluate(() => window.snapshots.at(-1).regions[0].width),
+    401,
+  );
+  const beforeImageChange = await observer.evaluate(
+    () => window.snapshots.length,
+  );
   await observer.evaluate(
     () => (document.querySelector("img").src = "data:image/png;base64,invalid"),
   );
-  await observer.waitForFunction(() => window.snapshots.length >= 2);
+  await observer.waitForFunction(
+    (previous) => window.snapshots.length > previous,
+    beforeImageChange,
+  );
   await observer.evaluate(
     () => (document.querySelector("img").style.display = "none"),
   );

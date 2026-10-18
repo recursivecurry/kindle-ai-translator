@@ -1,0 +1,84 @@
+name: Release extension
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Check out merged commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check code and run unit tests
+        run: |
+          npm run check
+          npm test
+
+      - name: Package extension
+        run: npm run package
+
+      - name: Run browser integration tests
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:integration
+
+      - name: Prepare release metadata
+        id: metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          const { name, version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          const manifest = JSON.parse(readFileSync('dist/manifest.json', 'utf8'));
+          if (manifest.version !== version) throw new Error('Package and manifest versions differ');
+          appendFileSync(process.env.GITHUB_OUTPUT,
+            `tag=v${version}-pr.${process.env.PR_NUMBER}\nasset=artifacts/${name}-${version}.zip\n`);
+          NODE
+
+      - name: Publish release with extension ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+          RELEASE_ASSET: ${{ steps.metadata.outputs.asset }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          set -euo pipefail
+          if draft=$(gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft'); then
+            if [[ "$draft" == false ]]; then
+              echo "Release $RELEASE_TAG is already published."
+              exit 0
+            fi
+          else
+            gh release create "$RELEASE_TAG" --target "$MERGE_SHA" \
+              --title "$RELEASE_TAG" --generate-notes --draft
+          fi
+          gh release upload "$RELEASE_TAG" "$RELEASE_ASSET" --clobber
+          gh release edit "$RELEASE_TAG" --draft=false

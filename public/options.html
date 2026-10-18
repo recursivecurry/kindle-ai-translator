@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>kindle-ai-translator 설정</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">KINDLE AI TRANSLATOR</p>
+      <h1>kindle-ai-translator</h1>
+      <p>
+        선택한 원본 언어의 본문을 기기에서 인식하고, 선택한 언어의 번역을 책
+        위에 표시합니다.
+      </p>
+      <form>
+        <label for="translation-engine">번역 엔진</label>
+        <select id="translation-engine">
+          <option value="openai">OpenAI API (기존 방식)</option>
+          <option value="chrome">Chrome 로컬 번역 API</option>
+        </select>
+        <label for="key">OpenAI API 키</label
+        ><input
+          id="key"
+          type="password"
+          autocomplete="off"
+          placeholder="키를 입력하세요"
+        />
+        <p id="key-state"></p>
+        <label for="source-language">원본 언어</label>
+        <select id="source-language"></select>
+        <label for="target-language">번역할 언어</label>
+        <select id="target-language"></select>
+        <label for="cache-pages">캐시할 페이지 이미지 수</label>
+        <input
+          id="cache-pages"
+          type="number"
+          min="1"
+          max="30"
+          step="1"
+          value="5"
+          required
+        />
+        <p>
+          기본 5개, 최대 30개입니다. 두 쪽이 한 이미지인 화면은 1개로 셉니다.
+          이미지 캐시는 메모리에서 24MB를 기준으로 관리합니다. 10분이 지난
+          항목은 다시 조회할 때 제거하며, 이전 페이지 보기에 필요한 이미지는
+          크기·개수·만료 기준보다 우선 보관합니다. 모든 데이터가 10분 후 일괄
+          삭제되는 것은 아닙니다. 탭을 닫으면 해당 뷰어의 캐시가 사라집니다.
+        </p>
+        <label for="font-family">번역 글꼴</label>
+        <select id="font-family">
+          <option value="sans-serif">나눔고딕 (sans-serif)</option>
+          <option value="serif">나눔명조 (serif)</option>
+        </select>
+        <p>선택한 글꼴에 없는 문자는 시스템의 대체 글꼴로 표시합니다.</p>
+        <label for="font-scale">번역 글자 크기 (%)</label>
+        <input
+          id="font-scale"
+          type="number"
+          min="70"
+          max="130"
+          step="5"
+          value="100"
+          required
+        />
+        <p>
+          100%는 원문 글자 높이에 맞춘 크기입니다. 70~130%로 조절할 수 있습니다.
+          문단 안에서 줄바꿈하며, 공간이 부족하면 설정 크기의 85%까지 줄입니다.
+          그래도 맞지 않으면 원문을 유지합니다. 설정 저장 시 현재 페이지를 다시
+          번역합니다.
+        </p>
+        <label class="toggle"
+          ><input id="enabled" type="checkbox" />모든 킨들 탭에서 자동
+          번역</label
+        >
+        <p id="privacy-notice">
+          OpenAI를 선택하면 현재 화면에서 인식한 본문과 책 순서상 앞 페이지의
+          원문·번역 문맥을 OpenAI에 전송합니다. 책 이미지는 OpenAI에 보내지
+          않으며, API 키는 OpenAI 요청 인증에 사용합니다. 자동 번역을 켜면 모든
+          킨들 탭에서 읽는 페이지에 적용되며, 새 번역과 재시도에는 API 사용료가
+          발생할 수 있습니다. 전송이 허용되는 콘텐츠인지 확인하세요.
+        </p>
+        <p id="external-retention">
+          API 요청은 응답 저장을 끄지만, OpenAI의 악용 방지 로그에는 원문과
+          번역문이 포함되어 기본적으로 최대 30일 보관될 수 있습니다. 법률상
+          의무나 안전상 필요 등에 따라 더 오래 보관될 수 있으며, 계정에 적용된
+          정책을 확인해야 합니다.
+          <a
+            href="https://developers.openai.com/api/docs/guides/your-data"
+            target="_blank"
+            rel="noopener noreferrer"
+            >OpenAI 데이터 보관 정책</a
+          >
+        </p>
+        <p id="model-notice">
+          번역 모델: gpt-6-luna. 키는 이 브라우저의 확장 저장소에 보관하며
+          동기화하지 않습니다. 이 기기를 사용하는 다른 사람이나 개발자 도구로는
+          접근할 수 있습니다.
+        </p>
+        <button type="submit">설정 저장</button
+        ><button id="delete" type="button">키 삭제 · 번역 끄기</button>
+        <p id="status" role="status"></p>
+      </form>
+      <p>
+        확장을 처음 설치했다면 킨들 탭을 새로고침하세요. 본문 옆 도구에서 원문
+        보기와 다시 시도를 사용할 수 있습니다. Alt+Shift+T로 원문과 번역을
+        전환합니다. Mac에서는 Option+Shift+T입니다. 입력란에서는 단축키가
+        작동하지 않습니다.
+      </p>
+      <p>
+        번역문은 드래그해서 선택하고 복사할 수 있습니다. 원문의 쪽 배치와 문단
+        위치를 유지하며, 공간이 부족한 문단은 원문으로 남깁니다.
+      </p>
+      <p>
+        사진 위의 글, 표와 수식은 지원을 보장하지 않습니다. 배경이나 배치가
+        안전하지 않은 문단은 원문으로 남기고 알려 드립니다.
+      </p>
+      <p>
+        개인 실험용 확장이며 Amazon·출판사·저작권자의 승인이나 후원을 받은
+        제품이 아닙니다. 관련 법률과
+        <a
+          href="https://www.amazon.com/gp/help/customer/display.html?nodeId=201014950"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Kindle 이용약관</a
+        >에 따라 허용되는 범위에서 사용하세요. 이 안내는 콘텐츠 이용 권한을
+        부여하거나 법률상 배제할 수 없는 책임을 면제하지 않습니다.
+        <a href="THIRD_PARTY_NOTICES.txt" target="_blank" rel="noopener"
+          >제3자 라이선스 고지</a
+        >
+      </p>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

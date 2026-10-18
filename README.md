@@ -6,7 +6,7 @@ Translate books in Kindle Web Reader while keeping the original page layout as c
 
 ## Example
 
-The same Kindle spread in English and Korean, with illustrations and the two-page layout preserved.
+The same spread from Lewis Carroll's *Alice's Adventures in Wonderland* in English and Korean, with the two-page layout preserved. The original English text is in the public domain.
 
 ### Original
 

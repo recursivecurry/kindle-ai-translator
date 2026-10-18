@@ -84,7 +84,13 @@ API 키는 이 브라우저의 확장 저장소에 보관하며 동기화하지 
 
 OpenAI 요청에는 응답 저장을 끄는 `store: false`를 사용합니다. 이는 보관이 전혀 없다는 뜻이 아닙니다. 악용 방지 로그에 입력·출력이 포함되어 기본적으로 최대 30일 보관될 수 있으며, 법률상 의무나 안전상 필요 등에 따른 예외가 있습니다. 계정별 설정에 따라 정책이 달라질 수 있으므로 [OpenAI 데이터 관리 안내](https://developers.openai.com/api/docs/guides/your-data)를 확인하세요. 이 확장에는 개발자가 운영하는 콘텐츠 서버나 분석 정보 수집 서버가 없습니다. Amazon 자체의 Kindle 이용 정보 처리는 Amazon 정책이 별도로 적용됩니다.
 
-## 제3자 라이선스
+## 라이선스
+
+프로젝트 자체 코드와 문서는 [MIT 라이선스](LICENSE)로 제공합니다. 저작권 표시와 라이선스 문구를 유지하면 상업적 이용을 포함한 사용·수정·재배포가 가능합니다. 설치 ZIP의 루트에도 `LICENSE`를 포함합니다.
+
+제3자 구성 요소에는 아래의 개별 라이선스가 적용됩니다. MIT는 책 콘텐츠, Kindle 인터페이스 또는 Amazon 상표의 이용 권한을 부여하거나 Amazon의 승인을 의미하지 않습니다.
+
+### 제3자 라이선스
 
 확장에는 Tesseract.js, OCR 코어, 10개 언어 데이터와 나눔고딕·나눔명조가 포함됩니다. 라이선스와 고지는 [THIRD_PARTY_NOTICES.txt](https://github.com/recursivecurry/kindle-ai-translator/blob/main/public/THIRD_PARTY_NOTICES.txt)에 정리했습니다. 설치 ZIP에는 루트의 고지 파일, `licenses/`의 JavaScript 의존성 라이선스, `vendor/` 및 `TESSDATA-LICENSE.txt`의 OCR 라이선스, `fonts/`의 글꼴 라이선스가 포함됩니다. 포함된 구성 요소를 재배포할 때 해당 고지를 유지하세요.
 

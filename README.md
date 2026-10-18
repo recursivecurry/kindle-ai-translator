@@ -84,7 +84,13 @@ Automatic translation is off on a new installation. Enabling it applies the sele
 
 OpenAI requests use `store: false` to disable response storage. This does not mean zero retention: abuse-monitoring logs may contain input and output and are normally retained for up to 30 days, with exceptions for legal obligations or safety needs. Account-specific controls may differ. See [OpenAI's data controls](https://developers.openai.com/api/docs/guides/your-data). This extension has no developer-operated content server or analytics endpoint; Amazon's own handling of Kindle activity is governed separately by its policies.
 
-## Third-party licenses
+## License
+
+The project's original code and documentation are available under the [MIT License](LICENSE), which permits use, modification, and redistribution, including commercial use, provided the copyright and license notices are retained. The installation ZIP includes `LICENSE` at its root.
+
+Third-party components retain their own licenses below. MIT does not grant rights to book content, the Kindle interface or Amazon trademarks, and does not imply Amazon's approval.
+
+### Third-party licenses
 
 The extension bundles Tesseract.js, the OCR core, ten language datasets, and Nanum Gothic/Myeongjo fonts. Their licenses and notices are listed in [THIRD_PARTY_NOTICES.txt](https://github.com/recursivecurry/kindle-ai-translator/blob/main/public/THIRD_PARTY_NOTICES.txt). The installation ZIP includes the notice at its root, JavaScript dependency licenses in `licenses/`, OCR licenses in `vendor/` and `TESSDATA-LICENSE.txt`, and font licenses in `fonts/`. Preserve these notices when redistributing the included components.
 

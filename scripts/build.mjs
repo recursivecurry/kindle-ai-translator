@@ -15,6 +15,7 @@ for (const [name, license] of [
   await cp(`node_modules/${name}/${license}`, `dist/licenses/${name}-LICENSE`);
 }
 await cp("README.md", "dist/README.md");
+await cp("LICENSE", "dist/LICENSE");
 await cp("README.ko.md", "dist/README.ko.md");
 await cp("DESIGN.md", "dist/DESIGN.md");
 await cp("DESIGN.ko.md", "dist/DESIGN.ko.md");

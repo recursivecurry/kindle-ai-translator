@@ -4,6 +4,16 @@ import { cp, mkdir, rm } from "node:fs/promises";
 await rm("dist", { recursive: true, force: true });
 await mkdir("dist/vendor", { recursive: true });
 await cp("public", "dist", { recursive: true });
+for (const [name, license] of [
+  ["bmp-js", "LICENSE"],
+  ["idb-keyval", "LICENCE"],
+  ["is-url", "LICENSE-MIT"],
+  ["regenerator-runtime", "LICENSE"],
+  ["wasm-feature-detect", "LICENSE"],
+  ["zlibjs", "LICENSE"],
+]) {
+  await cp(`node_modules/${name}/${license}`, `dist/licenses/${name}-LICENSE`);
+}
 await cp("README.md", "dist/README.md");
 await cp("README.ko.md", "dist/README.ko.md");
 await cp("DESIGN.md", "dist/DESIGN.md");

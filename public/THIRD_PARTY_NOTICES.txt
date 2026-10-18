@@ -7,9 +7,37 @@ Tesseract.js-core 7.0.0 / Tesseract OCR (Apache-2.0)
 https://github.com/naptha/tesseract.js-core
 License: vendor/core/LICENSE
 
-English trained data, @tesseract.js-data/eng 1.0.0
+OCR trained data, @tesseract.js-data/* 1.0.0 (4.0.0_best_int)
+Bundled languages: chi_sim (Simplified Chinese), chi_tra (Traditional Chinese),
+deu (German), eng (English), fra (French), jpn (Japanese), kor (Korean),
+por (Portuguese), spa (Spanish), vie (Vietnamese).
 https://github.com/naptha/tessdata
 Upstream trained-data license: TESSDATA-LICENSE.txt (Apache-2.0).
-The npm packaging declares MIT.
+The npm packages declare MIT for their packaging; only the traineddata.gz
+assets are copied into the extension, not their JavaScript entry points.
+
+Nanum Gothic and Nanum Myeongjo (SIL Open Font License 1.1)
+Copyright (c) 2010, NHN Corporation.
+Fonts: fonts/NanumGothic-Regular.ttf, fonts/NanumMyeongjo-Regular.ttf
+Licenses and reserved font names: fonts/NanumGothic-OFL.txt,
+fonts/NanumMyeongjo-OFL.txt. The font files are distributed unmodified.
+
+Other bundled JavaScript dependencies
+Full license texts: licenses/ (in the packaged extension).
+bmp-js (MIT), idb-keyval (Apache-2.0), is-url (MIT),
+regenerator-runtime (MIT), wasm-feature-detect (Apache-2.0), zlibjs (MIT).
+Their license files are copied from the installed packages at build time.
+The prebuilt Tesseract.js 7.0.0 worker also includes buffer 6.0.3 (MIT),
+base64-js 1.5.1 (MIT), and ieee754 1.2.1 (BSD-3-Clause).
+License sources for these prebuilt dependencies:
+https://github.com/feross/buffer/blob/v6.0.3/LICENSE
+https://github.com/beatgammit/base64-js/blob/v1.5.1/LICENSE
+https://github.com/feross/ieee754/blob/v1.2.1/LICENSE
+The upstream worker's embedded notices are also retained in
+vendor/worker.min.js.LICENSE.txt.
+
+Amazon and Kindle names, service interfaces, and book content are not licensed
+by this project's third-party software licenses. Chrome translation models and
+the OpenAI service are supplied separately by their respective providers.
 
 KCR Translate was inspected as a reference. No source code or assets from it are bundled.

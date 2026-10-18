@@ -43,9 +43,10 @@
         />
         <p>
           기본 5개, 최대 30개입니다. 두 쪽이 한 이미지인 화면은 1개로 셉니다.
-          캐시는 최대 24MB·10분이며 한도를 먼저 넘으면 오래 사용하지 않은
-          항목부터 지웁니다. 이전 페이지 보기에서는 현재·이전 화면에 필요한
-          이미지를 한도보다 우선 보관합니다.
+          이미지 캐시는 메모리에서 24MB를 기준으로 관리합니다. 10분이 지난
+          항목은 다시 조회할 때 제거하며, 이전 페이지 보기에 필요한 이미지는
+          크기·개수·만료 기준보다 우선 보관합니다. 모든 데이터가 10분 후 일괄
+          삭제되는 것은 아닙니다. 탭을 닫으면 해당 뷰어의 캐시가 사라집니다.
         </p>
         <label for="font-family">번역 글꼴</label>
         <select id="font-family">
@@ -74,9 +75,23 @@
           번역</label
         >
         <p id="privacy-notice">
-          현재 화면의 OCR 텍스트와 직전에 번역한 페이지의 원문·번역문을 OpenAI에
-          전송합니다. 책 이미지와 API 키는 킨들 페이지에 전달하지 않습니다. API
-          사용료는 OpenAI 계정에 별도로 청구됩니다.
+          OpenAI를 선택하면 현재 화면에서 인식한 본문과 책 순서상 앞 페이지의
+          원문·번역 문맥을 OpenAI에 전송합니다. 책 이미지는 OpenAI에 보내지
+          않으며, API 키는 OpenAI 요청 인증에 사용합니다. 자동 번역을 켜면 모든
+          킨들 탭에서 읽는 페이지에 적용되며, 새 번역과 재시도에는 API 사용료가
+          발생할 수 있습니다. 전송이 허용되는 콘텐츠인지 확인하세요.
+        </p>
+        <p id="external-retention">
+          API 요청은 응답 저장을 끄지만, OpenAI의 악용 방지 로그에는 원문과
+          번역문이 포함되어 기본적으로 최대 30일 보관될 수 있습니다. 법률상
+          의무나 안전상 필요 등에 따라 더 오래 보관될 수 있으며, 계정에 적용된
+          정책을 확인해야 합니다.
+          <a
+            href="https://developers.openai.com/api/docs/guides/your-data"
+            target="_blank"
+            rel="noopener noreferrer"
+            >OpenAI 데이터 보관 정책</a
+          >
         </p>
         <p id="model-notice">
           번역 모델: gpt-6-luna. 키는 이 브라우저의 확장 저장소에 보관하며
@@ -100,6 +115,20 @@
       <p>
         사진 위의 글, 표와 수식은 지원을 보장하지 않습니다. 배경이나 배치가
         안전하지 않은 문단은 원문으로 남기고 알려 드립니다.
+      </p>
+      <p>
+        개인 실험용 확장이며 Amazon·출판사·저작권자의 승인이나 후원을 받은
+        제품이 아닙니다. 관련 법률과
+        <a
+          href="https://www.amazon.com/gp/help/customer/display.html?nodeId=201014950"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Kindle 이용약관</a
+        >에 따라 허용되는 범위에서 사용하세요. 이 안내는 콘텐츠 이용 권한을
+        부여하거나 법률상 배제할 수 없는 책임을 면제하지 않습니다.
+        <a href="THIRD_PARTY_NOTICES.txt" target="_blank" rel="noopener"
+          >제3자 라이선스 고지</a
+        >
       </p>
     </main>
     <script src="options.js"></script>

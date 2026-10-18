@@ -21,6 +21,9 @@ const engineSelect = document.querySelector<HTMLSelectElement>(
 )!;
 const privacyNotice = document.querySelector<HTMLElement>("#privacy-notice")!;
 const modelNotice = document.querySelector<HTMLElement>("#model-notice")!;
+const externalRetention = document.querySelector<HTMLElement>(
+  "#external-retention",
+)!;
 const externalPrivacy = privacyNotice.textContent!;
 const externalModelNotice = modelNotice.textContent!;
 const saveButton = document.querySelector<HTMLButtonElement>(
@@ -42,8 +45,9 @@ const status = document.querySelector<HTMLElement>("#status")!;
 function renderEngine() {
   const local = engineSelect.value === "chrome";
   keyInput.disabled = local;
+  externalRetention.hidden = local;
   privacyNotice.textContent = local
-    ? "OCR 원문과 번역문은 Chrome 로컬 번역기로 기기에서 처리하며 OpenAI에 전송하지 않습니다. API 키와 API 사용료가 필요하지 않습니다. 기존 키는 삭제하지 않습니다."
+    ? "OCR 원문과 번역문은 Chrome 로컬 번역기로 기기에서 처리하며 OpenAI에 전송하지 않습니다. 모델 준비에는 다운로드가 필요할 수 있습니다. API 키와 API 사용료가 필요하지 않으며 기존 키는 삭제하지 않습니다. 로컬 처리만으로 콘텐츠 이용이 허용되는 것은 아니므로 이용 권한과 약관을 확인하세요."
     : externalPrivacy;
   modelNotice.textContent = local
     ? "데스크톱 Chrome 138 이상이 필요하며 기기와 언어에 따라 지원 여부가 다릅니다. 자동 번역을 켜고 저장하면 최초 모델 다운로드를 준비합니다. 미지원·실패 시 OpenAI로 자동 전환하지 않습니다. 로컬 번역은 오역이나 내용 누락이 있을 수 있습니다."

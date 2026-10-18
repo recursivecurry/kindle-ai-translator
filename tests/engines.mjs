@@ -162,8 +162,10 @@ try {
     await options.locator("#translation-engine").inputValue(),
     "openai",
   );
+  assert(await options.locator("#external-retention").isVisible());
   await options.locator("#translation-engine").selectOption("chrome");
   assert(await options.locator("#key").isDisabled());
+  assert(await options.locator("#external-retention").isHidden());
   const requestsBeforeLocal = apiRequests;
   await options.getByRole("button", { name: "설정 저장", exact: true }).click();
   await options
@@ -206,6 +208,7 @@ try {
   );
   await options.locator("#translation-engine").selectOption("openai");
   assert(await options.locator("#key").isEnabled());
+  assert(await options.locator("#external-retention").isVisible());
   await options.getByRole("button", { name: "설정 저장", exact: true }).click();
   await options
     .getByRole("status")

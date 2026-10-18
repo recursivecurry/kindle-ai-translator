@@ -25,6 +25,14 @@ Scope: migration from the external-API reader to explicit, current-page-only loc
 
 A local run on 2026-10-18 processed capture/decode, real OCR and mocked translation in approximately 308 ms. No external HTTP(S) request was observed in that test. This is a synthetic development measurement, not a real-device translation benchmark or proof about Chrome's browser-managed downloads.
 
+## Actual Chrome translation smoke test
+
+On 2026-10-18, the connected desktop Chrome browser reported `Chrome/155.0.0.0` and exposed the native Translator API. A temporary localhost test page imported an esbuild bundle of the repository's actual `src/translation.ts` adapter. Clicking its button exercised `prepareTranslator` and `translate` with the native English → Korean model, without mocks.
+
+The original fixture was: “The quiet garden was full of morning light. A small bird waited beside the wooden gate.” Chrome returned: “조용한 정원은 아침 햇살로 가득했습니다. 나무 문 옆에서 작은 새가 기다리고 있었다.” The first run took 5,161 ms including model setup; a second run took 138 ms including a fresh translator instance. The first run displayed the adapter's model-download preparation status; download bytes were not measured.
+
+This confirms the adapter can translate that fixture in the actual browser on a localhost origin. It does not establish extension-origin availability, side-panel user activation after tab setup, Kindle capture permissions, OCR quality or network isolation of the real model. The browser tool blocked access to `chrome://extensions`, so extension loading and the end-to-end Kindle test require the user to load `dist` manually. Those release gates remain open.
+
 ## Network inventory
 
 | Path | Data and destination |

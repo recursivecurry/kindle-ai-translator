@@ -1,4 +1,4 @@
-name: Release extension
+name: Prepare draft extension release
 
 on:
   pull_request_target:
@@ -62,7 +62,7 @@ jobs:
             `tag=v${version}-pr.${process.env.PR_NUMBER}\nasset=artifacts/${name}-${version}.zip\n`);
           NODE
 
-      - name: Publish release with extension ZIP
+      - name: Prepare draft release with extension ZIP
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -81,4 +81,3 @@ jobs:
               --title "$RELEASE_TAG" --generate-notes --draft
           fi
           gh release upload "$RELEASE_TAG" "$RELEASE_ASSET" --clobber
-          gh release edit "$RELEASE_TAG" --draft=false

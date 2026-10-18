@@ -67,7 +67,6 @@ export type Composition = {
 };
 export type Translation = { id: string; text: string };
 export type PageContext = { source: string; translation: string }[];
-export const MODEL = "gpt-6-luna";
 export const CONTEXT_CHARACTERS = 8000;
 export function boundedContext(value: unknown): PageContext {
   if (!Array.isArray(value)) return [];

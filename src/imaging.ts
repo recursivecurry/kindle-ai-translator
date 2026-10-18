@@ -42,6 +42,7 @@ export function createOcrWorker(language: unknown) {
     corePath: chrome.runtime.getURL("vendor/core"),
     langPath: chrome.runtime.getURL("vendor"),
     workerBlobURL: false,
+    cacheMethod: "none",
     logger: () => {},
     errorHandler: () => {},
   });
@@ -178,7 +179,7 @@ export async function recognize(
   });
   timings.workerCount = Math.min(workers.length, regions.length);
   timings.regionCount = regions.length;
-  if (!paragraphs.length) throw new Error("영어 본문을 인식하지 못했습니다.");
+  if (!paragraphs.length) throw new Error("본문을 인식하지 못했습니다.");
   const heights = paragraphs
     .map((p) => (p.box.y1 - p.box.y0) / Math.max(1, p.text.split("\n").length))
     .sort((a, b) => a - b);

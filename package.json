@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "tsc --noEmit && eslint src && prettier --check src scripts tests public package.json tsconfig.json eslint.config.mjs",
-    "test": "node --import tsx --test tests/unit.test.ts",
+    "test": "node --import tsx --test tests/*.test.ts",
     "test:integration": "node tests/integration.mjs",
     "format": "prettier --write src scripts tests public package.json tsconfig.json eslint.config.mjs",
     "package": "npm run build && node scripts/package.mjs"

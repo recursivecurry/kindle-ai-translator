@@ -31,7 +31,25 @@ On 2026-10-18, the connected desktop Chrome browser reported `Chrome/155.0.0.0` 
 
 The original fixture was: “The quiet garden was full of morning light. A small bird waited beside the wooden gate.” Chrome returned: “조용한 정원은 아침 햇살로 가득했습니다. 나무 문 옆에서 작은 새가 기다리고 있었다.” The first run took 5,161 ms including model setup; a second run took 138 ms including a fresh translator instance. The first run displayed the adapter's model-download preparation status; download bytes were not measured.
 
-This confirms the adapter can translate that fixture in the actual browser on a localhost origin. It does not establish extension-origin availability, side-panel user activation after tab setup, Kindle capture permissions, OCR quality or network isolation of the real model. The browser tool blocked access to `chrome://extensions`, so extension loading and the end-to-end Kindle test require the user to load `dist` manually. Those release gates remain open.
+This confirms the adapter can translate that fixture in the actual browser on a localhost origin. It does not establish OCR quality or network isolation of the real model. Extension-origin and capture checks were subsequently exercised in the test below.
+
+## Actual loaded-extension test
+
+After the user loaded `dist`, the extension was tested in the same desktop Chrome on `read.amazon.com` using the cover and a two-column opening spread of *Alice's Adventures in Wonderland*. No capture, OCR or Translator API was mocked.
+
+The first toolbar invocation opened the panel but left the extension without site access. Starting translation then reported that no supported Kindle tab was available. The toolbar's access indicator confirmed that permission was missing. Automatic `openPanelOnActionClick` handling was replaced with an explicit `chrome.action.onClicked` handler that calls `chrome.sidePanel.open`. After the user reloaded the extension, the toolbar indicator showed granted site access and the full capture → packaged OCR → native English-to-Korean translation pipeline completed.
+
+Observed results:
+
+- The cover produced six recognized/translated paragraphs, with poor recognition of decorative lettering.
+- The opening spread produced twelve recognized/translated paragraphs in the side panel while preserving the reader.
+- A manual page turn cleared the old result without starting another translation.
+- Switching to another browser tab cleared the result; returning did not restore it.
+- Cancelling an active operation cleared the result and re-enabled the controls. A subsequent retry completed successfully.
+- Closing and reopening the panel reset it to an empty result and its initial status.
+- Translation quality did not pass a fidelity review: a riverbank was translated as a financial institution, and part of one visible paragraph was missing from the output. A separate native-Translator comparison using the visually transcribed paragraph reproduced the same truncation without OCR. Replacing the colon with a period or translating the clauses separately recovered more content but still omitted the trailing fragment. Native-model fidelity remains a release blocker; this was not a successful quality benchmark.
+
+Screenshots were retained only in the ignored local `artifacts` directory, not committed or distributed. Actual extension network isolation, offline/restart behavior, other platforms/domains/layouts, model download size and resource usage remain unverified.
 
 ## Network inventory
 
@@ -47,7 +65,8 @@ The extension-page CSP permits only local packaged connections. Development depe
 
 ## Required before a public release
 
-- [ ] On an actual supported desktop Chrome device, verify English → Korean in the extension side panel, toolbar-granted capture, user activation, first model download and restart with cached models.
+- [x] On the tested desktop Chrome device, verify English → Korean in the extension side panel, toolbar-granted capture and user activation with an actual Kindle spread.
+- [ ] Verify first model download and browser restart with cached models in the extension context.
 - [ ] In browser/network tooling, inspect real-model runs and confirm book images/text/translations/metadata are not transmitted. Distinguish Chrome model downloads from Kindle's own traffic.
 - [ ] Test offline use with installed models, offline/missing models, browser policy restrictions, permission denial, switching windows, panel closure and rapid actual Kindle page changes.
 - [ ] Test supported Kindle domains and book layouts, including iframe behavior. An unsupported layout must fail clearly; do not introduce internal extraction as a workaround.

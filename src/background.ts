@@ -10,4 +10,9 @@ chrome.runtime.onInstalled.addListener(() => {
     "targetLanguage",
   ]);
 });
-void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+chrome.action.onClicked.addListener((tab) => {
+  void chrome.sidePanel.open({ windowId: tab.windowId }).catch(() => {
+    console.error("Could not open the translation panel.");
+  });
+});

@@ -1,3 +1,4 @@
+import type { TranslationEngine } from "./translation-engine";
 import { MODEL, type Paragraph, type PageContext } from "./model";
 
 const normalized = (text: string) => text.replace(/\s+/g, " ").trim();
@@ -35,10 +36,12 @@ export function translationTextKey(
   target: string,
   paragraphs: Paragraph[],
   context: PageContext,
+  engine: TranslationEngine = "openai",
 ) {
   return JSON.stringify([
     "parallel-original-paragraphs-v2",
-    MODEL,
+    engine,
+    engine === "openai" ? MODEL : "chrome-translator",
     "low",
     book,
     source,

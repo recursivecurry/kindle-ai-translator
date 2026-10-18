@@ -3,7 +3,7 @@
   "name": "kindle-ai-translator",
   "version": "0.1.0",
   "minimum_chrome_version": "116",
-  "description": "킨들 페이지를 기기에서 OCR하고 OpenAI로 선택한 언어로 번역합니다.",
+  "description": "킨들 페이지를 기기에서 OCR하고 OpenAI 또는 Chrome 로컬 번역기로 번역합니다.",
   "permissions": ["storage", "offscreen"],
   "host_permissions": ["https://api.openai.com/*"],
   "background": { "service_worker": "background.js", "type": "module" },

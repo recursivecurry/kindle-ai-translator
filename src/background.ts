@@ -1,3 +1,5 @@
+import { translationEngine } from "./translation-engine";
+import { translationChunks } from "./local-translation";
 import { targetLanguage, sourceLanguage, TARGET_LANGUAGES } from "./languages";
 import {
   boundedContext,
@@ -5,6 +7,7 @@ import {
   JOB_TIMEOUT,
   typography,
   cachePageLimit,
+  validateTranslations,
   type Paragraph,
   type Translation,
   type Composition,
@@ -27,6 +30,7 @@ async function settings() {
   const data = await chrome.storage.local.get([
     "enabled",
     "apiKey",
+    "translationEngine",
     "revision",
     "typography",
     "cachePages",
@@ -35,11 +39,12 @@ async function settings() {
     "sourceLanguage",
   ]);
   return {
+    translationEngine: translationEngine(data.translationEngine),
     targetLanguage: targetLanguage(data.targetLanguage),
     sourceLanguage: sourceLanguage(data.sourceLanguage),
     enabled: data.enabled === true,
     apiKey: typeof data.apiKey === "string" ? data.apiKey : "",
-    revision: `${data.revision ?? ""}:${sourceLanguage(data.sourceLanguage)}:${targetLanguage(data.targetLanguage)}`,
+    revision: `${data.revision ?? ""}:${sourceLanguage(data.sourceLanguage)}:${targetLanguage(data.targetLanguage)}:${translationEngine(data.translationEngine)}`,
     typography: typography(data.typography),
     cachePages: cachePageLimit(data.cachePages),
     previousPageMode: data.previousPageMode === true,
@@ -67,6 +72,33 @@ async function ensureOffscreen() {
       creating = undefined;
     });
   await creating;
+}
+async function translateLocally(
+  paragraphs: Paragraph[],
+  id: string,
+  sourceLanguage: string,
+  targetLanguage: string,
+  signal: AbortSignal,
+): Promise<Translation[]> {
+  const response = await deadline(
+    chrome.runtime.sendMessage({
+      target: "offscreen",
+      type: "translate",
+      id,
+      paragraphs,
+      sourceLanguage,
+      targetLanguage,
+    }),
+    JOB_TIMEOUT,
+    "로컬 번역 시간이 초과되었습니다.",
+    signal,
+  );
+  if (!response || response.error)
+    throw new Error(response?.error || "로컬 번역 응답이 없습니다.");
+  return validateTranslations(
+    { paragraphs: response.translations },
+    paragraphs,
+  );
 }
 function send(port: chrome.runtime.Port, message: unknown) {
   if (connections.has(port)) port.postMessage(message);
@@ -204,7 +236,7 @@ chrome.runtime.onConnect.addListener((port) => {
         controller.signal.throwIfAborted();
         const config = await settings();
         if (!config.enabled) throw new Error("자동 번역이 꺼져 있습니다.");
-        if (!config.apiKey)
+        if (config.translationEngine === "openai" && !config.apiKey)
           throw new Error("설정에서 OpenAI API 키를 입력하세요.");
         const offscreenStart = performance.now();
         await ensureOffscreen();
@@ -277,6 +309,7 @@ chrome.runtime.onConnect.addListener((port) => {
           config.targetLanguage,
           paragraphs,
           context,
+          config.translationEngine,
         );
         const candidate = textCache.get(textKey);
         const cachedTranslation =
@@ -289,20 +322,33 @@ chrome.runtime.onConnect.addListener((port) => {
         timings.textCacheHit = cachedTranslation ? 1 : 0;
         timings.translationRequests = cachedTranslation
           ? 0
-          : translationBatches(paragraphs).length;
+          : config.translationEngine === "chrome"
+            ? paragraphs.reduce(
+                (count, p) => count + translationChunks(p.text).length,
+                0,
+              )
+            : translationBatches(paragraphs).length;
         const translations: Translation[] =
           cachedTranslation?.text.map((text, index) => ({
             id: paragraphs[index].id,
             text,
           })) ??
-          (await translate(
-            paragraphs,
-            config.apiKey,
-            controller.signal,
-            context,
-            config.targetLanguage,
-            config.sourceLanguage,
-          ));
+          (config.translationEngine === "chrome"
+            ? await translateLocally(
+                paragraphs,
+                id,
+                config.sourceLanguage,
+                config.targetLanguage,
+                controller.signal,
+              )
+            : await translate(
+                paragraphs,
+                config.apiKey,
+                controller.signal,
+                context,
+                config.targetLanguage,
+                config.sourceLanguage,
+              ));
         controller.signal.throwIfAborted();
         textCache.delete(textKey);
         textCache.set(textKey, {

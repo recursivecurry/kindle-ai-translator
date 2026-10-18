@@ -803,6 +803,7 @@ test("offscreen reuses idle workers and discards cancelled or different-language
   let enteredRecognition: (() => void) | undefined;
   let pause = false;
   runInNewContext(bundle.outputFiles[0].text, {
+    AbortController,
     performance,
     setTimeout,
     clearTimeout,

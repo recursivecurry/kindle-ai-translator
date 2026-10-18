@@ -6,7 +6,7 @@ Translate books in Kindle Web Reader while keeping the original page layout as c
 
 ## Example
 
-The same Kindle spread in English and Korean, with illustrations and the two-page layout preserved.
+The same spread from Lewis Carroll's *Alice's Adventures in Wonderland* in English and Korean, with the two-page layout preserved. The original English text is in the public domain.
 
 ### Original
 
@@ -18,11 +18,11 @@ The same Kindle spread in English and Korean, with illustrations and the two-pag
 
 ## Install
 
-You need Chrome 116 or later, an OpenAI API key, and a packaged extension ZIP. The repository's **Download ZIP** contains source code, not an installable extension.
+You need Chrome 116 or later and a packaged extension ZIP. OpenAI translation requires an API key; optional Chrome local translation requires desktop Chrome 138 or later and a supported device/language pair. The repository's **Download ZIP** contains source code, not an installable extension.
 
 1. Extract the extension ZIP to a folder you will keep on your computer.
 2. Open `chrome://extensions`, enable **Developer mode**, and choose **Load unpacked**. Select the folder containing `manifest.json`.
-3. Click the extension icon. Enter your API key, choose the source and target languages, enable automatic translation, and save.
+3. Click the extension icon. Choose OpenAI API (the default) or Chrome local translation, choose the source and target languages, enable automatic translation, and save. Enter an API key for OpenAI. For local translation, saving prepares Chrome's model and shows download progress if needed.
 4. Reload any open Kindle tabs and open a book.
 
 Supported readers: `read.amazon.com`, `read.amazon.co.uk`, `read.amazon.co.jp`, and `read.amazon.de`.
@@ -52,6 +52,7 @@ Open settings from the extension icon. Settings apply across Kindle tabs.
 
 | Setting                     | Choices                                                                                                                                         |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Translation engine         | OpenAI API (default) or Chrome local Translator API. Changing engines preserves the stored API key and clears incompatible translation results. |
 | Source and target languages | English, Korean, Japanese, Simplified Chinese, Traditional Chinese, Spanish, French, German, Portuguese, Vietnamese. Default: English → Korean. |
 | Font                        | Nanum Gothic or Nanum Myeongjo; other characters use system fallback fonts.                                                                     |
 | Text size                   | 70–130% of the estimated original size.                                                                                                         |
@@ -61,14 +62,15 @@ The cache is temporary. Memory and expiry limits may reduce the number of retain
 
 ## Privacy and cost
 
-Text recognition runs on your device. Recognized text and relevant preceding-page text and translations are sent to OpenAI. Book images are not sent to OpenAI.
+Text recognition runs on your device. With OpenAI selected, recognized text and relevant preceding-page text and translations are sent to OpenAI. Book images are not sent to OpenAI. With Chrome local translation selected, text is translated on your device in the existing OCR/composition pipeline. Chrome may download translation models; local translation does not call OpenAI or automatically fall back to it.
 
-Your API key stays in this browser's local extension storage and is not synced. It is accessible to someone with access to your device. API usage is billed separately from a ChatGPT subscription; new translations and retries may incur charges.
+Your API key stays in this browser's local extension storage and is not synced. It is accessible to someone with access to your device. OpenAI API usage is billed separately from a ChatGPT subscription; new translations and retries may incur charges. Chrome local translation needs no key or API usage fee. Both modes retain the existing temporary page caches and previous-page view.
 
 ## Limitations and troubleshooting
 
 - Recognition and translation can contain errors. Use the original view to check unclear passages.
 - Layout and font size are approximations. Paragraphs that cannot fit or safely cover the original remain untranslated.
 - Tables, equations, vertical writing, and text over pictures may not work well.
-- If translation fails, check the API key and account balance or limits, then use **Retry**.
+- If OpenAI translation fails, check the API key and account balance or limits, then use **Retry**.
+- For Chrome local translation, open settings, enable automatic translation and save to prepare the selected language pair. Repeat this after changing to an unprepared language pair in the reader. Unsupported devices/languages and failed model preparation show an error; they do not switch to OpenAI. The local model can mistranslate or omit content, so compare it with the original.
 - After installing or reloading the extension, reload the Kindle tab too.

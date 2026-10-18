@@ -8,15 +8,18 @@ await cp("README.md", "dist/README.md");
 await cp("README.ko.md", "dist/README.ko.md");
 await cp("DESIGN.md", "dist/DESIGN.md");
 await cp("DESIGN.ko.md", "dist/DESIGN.ko.md");
-await cp("PRIVACY.md", "dist/PRIVACY.md");
-await cp("LICENSE", "dist/LICENSE");
-await mkdir("dist/docs", { recursive: true });
-await cp("docs/VALIDATION.md", "dist/docs/VALIDATION.md");
+await cp("docs/images", "dist/docs/images", { recursive: true });
 await build({
-  entryPoints: ["src/background.ts", "src/content.ts", "src/panel.ts"],
+  entryPoints: [
+    "src/background.ts",
+    "src/content.ts",
+    "src/kindle-bridge.ts",
+    "src/offscreen.ts",
+    "src/options.ts",
+  ],
   bundle: true,
   outdir: "dist",
-  target: "chrome138",
+  target: "chrome116",
   format: "iife",
 });
 await cp(
@@ -36,10 +39,6 @@ for (const file of [
   );
 }
 for (const { ocr } of Object.values(TARGET_LANGUAGES)) {
-  await cp(
-    `node_modules/@tesseract.js-data/${ocr}/package.json`,
-    `dist/vendor/${ocr}-package.json`,
-  );
   await cp(
     `node_modules/@tesseract.js-data/${ocr}/4.0.0_best_int/${ocr}.traineddata.gz`,
     `dist/vendor/${ocr}.traineddata.gz`,

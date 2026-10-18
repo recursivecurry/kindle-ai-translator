@@ -7,10 +7,9 @@ Tesseract.js-core 7.0.0 / Tesseract OCR (Apache-2.0)
 https://github.com/naptha/tesseract.js-core
 License: vendor/core/LICENSE
 
-Trained data: eng, kor, jpn, chi_sim, chi_tra, spa, fra, deu, por, vie
-@tesseract.js-data packages 1.0.0
+English trained data, @tesseract.js-data/eng 1.0.0
 https://github.com/naptha/tessdata
 Upstream trained-data license: TESSDATA-LICENSE.txt (Apache-2.0).
-The npm packaging declares MIT; package metadata is included in vendor.
+The npm packaging declares MIT.
 
-Chrome Translator models are supplied and managed by Chrome and are not bundled.
+KCR Translate was inspected as a reference. No source code or assets from it are bundled.

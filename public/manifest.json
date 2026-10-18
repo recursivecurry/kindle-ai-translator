@@ -2,13 +2,53 @@
   "manifest_version": 3,
   "name": "kindle-ai-translator",
   "version": "0.1.0",
-  "minimum_chrome_version": "138",
-  "description": "사용자가 보고 있는 Kindle 페이지를 로컬 OCR과 Chrome 내장 번역기로 번역합니다.",
-  "permissions": ["activeTab", "scripting", "sidePanel", "storage"],
+  "minimum_chrome_version": "116",
+  "description": "킨들 페이지를 기기에서 OCR하고 OpenAI 또는 Chrome 로컬 번역기로 번역합니다.",
+  "permissions": ["storage", "offscreen"],
+  "host_permissions": ["https://api.openai.com/*"],
   "background": { "service_worker": "background.js", "type": "module" },
-  "side_panel": { "default_path": "panel.html" },
-  "action": { "default_title": "현재 Kindle 페이지 로컬 번역" },
+  "options_page": "options.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["fonts/*.ttf"],
+      "matches": [
+        "https://read.amazon.com/*",
+        "https://read.amazon.co.uk/*",
+        "https://read.amazon.co.jp/*",
+        "https://read.amazon.de/*"
+      ]
+    }
+  ],
+  "action": {
+    "default_title": "kindle-ai-translator 설정"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://read.amazon.com/*",
+        "https://read.amazon.co.uk/*",
+        "https://read.amazon.co.jp/*",
+        "https://read.amazon.de/*"
+      ],
+      "js": ["kindle-bridge.js"],
+      "world": "MAIN",
+      "all_frames": true,
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://read.amazon.com/*",
+        "https://read.amazon.co.uk/*",
+        "https://read.amazon.co.jp/*",
+        "https://read.amazon.de/*"
+      ],
+      "js": ["content.js"],
+      "all_frames": true,
+      "match_origin_as_fallback": true,
+      "run_at": "document_idle"
+    }
+  ],
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self'; img-src 'self' data: blob:; object-src 'none'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   }
 }

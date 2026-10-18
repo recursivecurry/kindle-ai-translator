@@ -5,7 +5,7 @@ import {
   translate,
   translationChunks,
   type TranslatorFactory,
-} from "../src/translation.ts";
+} from "../src/local-translation.ts";
 import type { Paragraph } from "../src/model.ts";
 
 test("local translation preserves paragraph order, chunks long inputs, and reports progress", async () => {
@@ -132,8 +132,16 @@ test("feature detection, download progress, failures and late cancellation stay 
         };
       },
     };
-    const translator = await prepareTranslator(controller.signal, (message) =>
-      messages.push(message),
+    await assert.rejects(
+      prepareTranslator(controller.signal, () => {}),
+      /설정에서/,
+    );
+    const translator = await prepareTranslator(
+      controller.signal,
+      (message) => messages.push(message),
+      "en",
+      "ko",
+      true,
     );
     assert(messages.some((message) => message.includes("50%")));
     translator.destroy();
@@ -143,7 +151,7 @@ test("feature detection, download progress, failures and late cancellation stay 
       return create(options);
     };
     await assert.rejects(
-      prepareTranslator(controller.signal, () => {}),
+      prepareTranslator(controller.signal, () => {}, "en", "ko", true),
       { name: "AbortError" },
     );
     assert.equal(destroyed, 2);
@@ -151,11 +159,37 @@ test("feature detection, download progress, failures and late cancellation stay 
       throw new Error("Download failed");
     };
     await assert.rejects(
-      prepareTranslator(new AbortController().signal, () => {}),
+      prepareTranslator(
+        new AbortController().signal,
+        () => {},
+        "en",
+        "ko",
+        true,
+      ),
       /Download failed/,
     );
   } finally {
     if (original) scope.Translator = original;
     else delete scope.Translator;
   }
+});
+
+test("engine defaults preserve OpenAI and cache keys separate the selected provider", async () => {
+  const { translationEngine } = await import("../src/translation-engine.ts");
+  const { translationTextKey } = await import("../src/translation-plan.ts");
+  assert.equal(translationEngine(undefined), "openai");
+  assert.equal(translationEngine("unknown"), "openai");
+  assert.equal(translationEngine("openai"), "openai");
+  assert.equal(translationEngine("chrome"), "chrome");
+  const paragraphs = [
+    { id: "one", text: "A sentence.", kind: "body" },
+  ] as Paragraph[];
+  assert.equal(
+    translationTextKey("book", "en", "ko", paragraphs, []),
+    translationTextKey("book", "en", "ko", paragraphs, [], "openai"),
+  );
+  assert.notEqual(
+    translationTextKey("book", "en", "ko", paragraphs, [], "openai"),
+    translationTextKey("book", "en", "ko", paragraphs, [], "chrome"),
+  );
 });
